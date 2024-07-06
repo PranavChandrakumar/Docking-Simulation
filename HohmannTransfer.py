@@ -8,7 +8,7 @@ scene.height = 1080
 
 #scale_factor = 1 #1 simulation linear size unit is equivalent to 100km
 
-def KeplerToCartesian(a,e,i,omega,Omega,T,t,mu): #Semi-Major axis, Eccentricity, Inclination, Argument of Periapsis, Longitude of Ascending node, Epoch
+def KeplerToCartesian(a,e,i,omega,Omega,T,t,mu): #Semi-Major axis, Eccentricity, Inclination, Argument of Periapsis, Longitude of Ascending node, Epoch, Standard gravitational parameter
     #Mean anomaly
     n = np.sqrt(mu / a**3)
     MA = n * (t - T)  # Mean anomaly
@@ -71,7 +71,7 @@ SpacecraftPath = curve(colour = color.white)
 
 while True:
     rate(60)
-    t += 10 #times dont make any sense times dont make any sense times dont make any sense times dont make any sense PLOT IT AND SEE PERIOD
+    t += 10 # PLOT IT AND SEE PERIOD
 
     TargetPos = KeplerToCartesian(parameters.Target_alpha, parameters.Target_ecc, parameters.Target_i, parameters.Target_omega, parameters.Target_Omega,0,t,parameters.Planet_mu)
 
