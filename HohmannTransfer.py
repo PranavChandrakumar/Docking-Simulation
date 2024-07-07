@@ -1,7 +1,8 @@
-from vpython import sphere, box, curve, arrow, vector, rate, color, scene
+from vpython import sphere, box, curve, arrow, vector, rate, color, scene, button
 import numpy as np
-import parameters
 import sympy as sp
+import parameters
+import Graphs
 
 scene.width = 1920
 scene.height = 1080
@@ -23,6 +24,7 @@ def KeplerToCartesian(a,e,i,omega,Omega,T,t,mu): #Semi-Major axis, Eccentricity,
     MA = n * (t - T)  # Mean anomaly
     
     #Define symbolic variables
+    #Eccentric anomaly
     EA = sp.Symbol('EA', real=True)
     #Solving for EA symbolically
     EA_solution = sp.nsolve(MA - EA + e * sp.sin(EA), EA, 0)
@@ -115,12 +117,25 @@ def CartesianToKepler(r_vec,v_vec):
 
     return [alpha,e,i,omega,Omega,nu,T]
 
-def CircularizeBurn(Cartpos_i, Keppos_i, Vel_i, Vel_Ap):
+def CalculateTargetV(r_vec,v_vec,Kep_i):
+
+    return
+
+def CircularizeBurn(r_vec, v_vec, Kep_i):
     #print("Burn",np.linalg.norm([SpacecraftPos[0],SpacecraftPos[1],SpacecraftPos[2]]) - parameters.Planet_Radius)
+
     return 
+
+running = True
+def ExitProgram():
+    global running
+    running = False
+    return
 
 #Defining initial conditions for simulation objects
 t = 0
+
+quit_button = button(text = "Quit", bind = ExitProgram) 
 
 arrow_length = 2 * parameters.Planet_Radius 
 x_axis = arrow(pos=vector(0, 0, 0), axis=vector(arrow_length, 0, 0), color=color.red, shaftwidth=0.01 * arrow_length)
@@ -138,28 +153,22 @@ Spacecraft = box(pos = vector(SpacecraftPosInitial[0],SpacecraftPosInitial[1],Sp
 TargetPath = curve(colour = color.white)
 SpacecraftPath = curve(colour = color.white)
 
-
 #Simulation runtime loop
-while True: 
+while running: 
     rate(60)
     t += 1/60*parameters.TimeScale # PLOT IT AND SEE PERIOD
 
     TargetPos = KeplerToCartesian(Target_alpha, Target_ecc, Target_i, Target_omega, Target_Omega,parameters.Target_T,t,parameters.Planet_mu)
     SpacecraftPos = KeplerToCartesian(Spacecraft_alpha, Spacecraft_ecc, Spacecraft_i, Spacecraft_omega, Spacecraft_Omega,parameters.Spacecraft_T,t,parameters.Planet_mu)
 
-    if Spacecraft_ecc > 1e-15: #Eccentricity less than 0.001 is arbitrarily set to be the bound for a circular orbit
-        
-        if Spacecraft_rP - 10 <= np.linalg.norm([SpacecraftPos[0],SpacecraftPos[1],SpacecraftPos[2]]) <= Spacecraft_rP + 10: #10m tolerance on when to burn
+    if Spacecraft_ecc > 1e-15: #Eccentricity less than 1e-15 is arbitrarily set to be the bound for a circular orbit
+        if Spacecraft_rP - 1 <= np.linalg.norm([SpacecraftPos[0],SpacecraftPos[1],SpacecraftPos[2]]) <= Spacecraft_rP + 1: #10m tolerance on when to burn
             #CircularizationBurn()
-            print("Burning")
+            #print("Burning")
             continue
-
         #Update position after burn
         TargetPos = KeplerToCartesian(Target_alpha, Target_ecc, Target_i, Target_omega, Target_Omega,0,t,parameters.Planet_mu)
         SpacecraftPos = KeplerToCartesian(Spacecraft_alpha, Spacecraft_ecc, Spacecraft_i, Spacecraft_omega, Spacecraft_Omega,0,t,parameters.Planet_mu)
-
-    else:
-        print(Spacecraft_ecc,Spacecraft_ecc - 0.01)
     
     Target.pos.x, Target.pos.y, Target.pos.z = TargetPos[0],TargetPos[1],TargetPos[2]
     Spacecraft.pos.x, Spacecraft.pos.y, Spacecraft.pos.z = SpacecraftPos[0],SpacecraftPos[1],SpacecraftPos[2]
@@ -168,11 +177,21 @@ while True:
 
     SpacecraftPath.append(pos=vector(SpacecraftPos[0],SpacecraftPos[1],SpacecraftPos[2]))
 
+    Graphs.v_x.append(SpacecraftPos[3])
+    Graphs.v_y.append(SpacecraftPos[4])
+    Graphs.v_z.append(SpacecraftPos[5])
+    Graphs.r.append(np.linalg.norm([SpacecraftPos[0],SpacecraftPos[1],SpacecraftPos[2]]))
+    Graphs.v.append(np.linalg.norm([SpacecraftPos[3],SpacecraftPos[4],SpacecraftPos[5]]))
+    Graphs.t.append(t)
+
     #print(t)
     # print(Target_alpha, Target_ecc, Target_i, Target_omega, Target_Omega,"K")
     # print(TargetPosCK[0],TargetPosCK[1],TargetPosCK[2],TargetPosCK[3],TargetPosCK[4])
 
-   
+print("Exiting Simulation.")
+Graphs.main()
+
+
 
 
     
