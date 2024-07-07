@@ -8,6 +8,15 @@ scene.height = 1080
 
 #scale_factor = 1 #1 simulation linear size unit is equivalent to 100km
 
+#Import parameters that will be changed
+Target_alpha, Target_ecc, Target_i, Target_omega, Target_Omega, Target_rA, Target_rP = parameters.Target_alpha, parameters.Target_ecc, parameters.Target_i, parameters.Target_omega, parameters.Target_Omega, parameters.Target_rA, parameters.Target_rP
+if (Target_rA == Target_rP):
+    Target_omega = 0
+
+Spacecraft_alpha, Spacecraft_ecc, Spacecraft_i, Spacecraft_omega, Spacecraft_Omega, Spacecraft_rA, Spacecraft_rP = parameters.Spacecraft_alpha, parameters.Spacecraft_ecc, parameters.Spacecraft_i, parameters.Spacecraft_omega, parameters.Spacecraft_Omega, parameters.Spacecraft_rA, parameters.Spacecraft_rP
+if (Spacecraft_rA == Spacecraft_rP):
+    Spacecraft_omega = 0
+
 def KeplerToCartesian(a,e,i,omega,Omega,T,t,mu): #Semi-Major axis, Eccentricity, Inclination, Argument of Periapsis, Longitude of Ascending node, Epoch, Standard gravitational parameter
     #Mean anomaly
     n = np.sqrt(mu / a**3)
@@ -42,11 +51,73 @@ def KeplerToCartesian(a,e,i,omega,Omega,T,t,mu): #Semi-Major axis, Eccentricity,
 
     return [rx,ry,rz,vx,vy,vz]
 
-def CircularizationBurn():
+def CartesianToKepler(r_vec,v_vec):
+    #Position and Velocity
+    r = np.linalg.norm(r_vec)
+    v = np.linalg.norm(v_vec)
+    
+    #Angular Momentum
+    h_vec = np.cross(r_vec,v_vec) 
+    h = np.linalg.norm(h_vec) 
+
+    #Eccentricity
+    e_vec = np.cross(v_vec,h_vec)/parameters.Planet_mu - r_vec/r
+    e = np.linalg.norm(e_vec)
+
+    #Vector pointing towards the ascending node
+    n_vec = [-h_vec[1],h_vec[0],0]
+    n = np.linalg.norm(n_vec)
+
+    #Inclination
+    i = np.arccos(h_vec[2]/h)
+
+    #Lonigitude of Ascending Node
+    if (i > 4.8481e-6): #An orbit inclination smaller than 1 arcsecond (1/3600 of a degree = 4.8481e-6 radians) is considered small enough to be planar
+        if (n_vec[1] >= 0):
+            Omega = np.arccos(n_vec[0]/n)
+        else:
+            Omega = 2*np.pi - np.arccos(n_vec[0]/n)
+    else:
+        Omega = 0
+
+    #Argument of Periapsis and True Anomaly 
+    if (e > 1e-15): #An orbit with eccentricity less than 1e-15 is considered circular. There are too many computational errors that arise when computing an argument of periapsis for orbits that are extremely close to perfectly circular.
+        if (e_vec[2] >= 0):
+            omega = np.arccos(np.dot(n_vec,e_vec)/(n*e))
+        else:
+            omega = 2*np.pi - np.arccos(np.dot(n_vec,e_vec)/(n*e))
+        if (np.dot(r_vec,v_vec) >= 0):
+            nu = np.arccos(np.dot(e_vec,r_vec)/(e*r))
+        else:
+            nu = 2*np.pi - np.arccos(np.dot(e_vec,r_vec)/(e*r))
+    else:
+        omega = 0
+        if (i > 4.8481e-6):
+            if (r_vec[2] >= 0):
+                nu = np.arccos(np.dot(n_vec,r_vec)/(n*r))
+            else:
+                nu = 2*np.pi - np.arccos(np.dot(n_vec,r_vec)/(n*r))
+        else:
+            if (v_vec[0 <= 0]):
+                nu = np.arccos(r_vec[0]/r)
+            else:
+                nu = np.pi - np.arccos(r_vec[0]/r)
+    
+    #Semi-major axis
+    alpha = 1/((2/r)-(v**2/parameters.Planet_mu)) 
+
+    #Eccentric anomaly
+    EA = np.arctan([((1-e)/(1+e))**(1/2)*np.tan(nu/2)])*2
+
+    #Epoch
+    n = np.sqrt(parameters.Planet_mu/alpha**3)
+    T = t - 1/n*(EA-e*np.sin(EA))
+
+    return [alpha,e,i,omega,Omega,nu,T]
+
+def CircularizeBurn(Cartpos_i, Keppos_i, Vel_i, Vel_Ap):
     #print("Burn",np.linalg.norm([SpacecraftPos[0],SpacecraftPos[1],SpacecraftPos[2]]) - parameters.Planet_Radius)
     return 
-
-
 
 #Defining initial conditions for simulation objects
 t = 0
@@ -58,40 +129,54 @@ z_axis = arrow(pos=vector(0, 0, 0), axis=vector(0, 0, arrow_length), color=color
 
 Planet = sphere(pos = vector(0,0,0), radius = parameters.Planet_Radius, color = color.blue)
 
-TargetPosInitial = KeplerToCartesian(parameters.Target_alpha, parameters.Target_ecc, parameters.Target_i, parameters.Target_omega, parameters.Target_Omega,0,t,parameters.Planet_mu)
-Target = sphere(pos = vector(TargetPosInitial[0],TargetPosInitial[1],TargetPosInitial[2]), radius = 200000, color = color.red) #Radius is arbitrary
+TargetPosInitial = KeplerToCartesian(Target_alpha, Target_ecc, Target_i, Target_omega, Target_Omega,parameters.Target_T,t,parameters.Planet_mu) #need to fix the 0 at some point
+Target = sphere(pos = vector(TargetPosInitial[0],TargetPosInitial[1],TargetPosInitial[2]), radius = 200000, color = color.red) #Size is arbitrary
 
-SpacecraftPosInitial = KeplerToCartesian(parameters.Spacecraft_alpha, parameters.Spacecraft_ecc, parameters.Spacecraft_i, parameters.Spacecraft_omega, parameters.Spacecraft_Omega,0,t,parameters.Planet_mu)
-Spacecraft = box(pos = vector(SpacecraftPosInitial[0],SpacecraftPosInitial[1],SpacecraftPosInitial[2]), length = 200000, height = 200000, width = 200000, color = color.green) 
+SpacecraftPosInitial = KeplerToCartesian(Spacecraft_alpha, Spacecraft_ecc, Spacecraft_i, Spacecraft_omega, Spacecraft_Omega,parameters.Spacecraft_T,t,parameters.Planet_mu)
+Spacecraft = box(pos = vector(SpacecraftPosInitial[0],SpacecraftPosInitial[1],SpacecraftPosInitial[2]), length = 200000, height = 200000, width = 200000, color = color.green) #Size is arbitrary
 
 TargetPath = curve(colour = color.white)
 SpacecraftPath = curve(colour = color.white)
 
 
-
-while True:
+#Simulation runtime loop
+while True: 
     rate(60)
-    t += 10 # PLOT IT AND SEE PERIOD
+    t += 1/60*parameters.TimeScale # PLOT IT AND SEE PERIOD
 
-    TargetPos = KeplerToCartesian(parameters.Target_alpha, parameters.Target_ecc, parameters.Target_i, parameters.Target_omega, parameters.Target_Omega,0,t,parameters.Planet_mu)
+    TargetPos = KeplerToCartesian(Target_alpha, Target_ecc, Target_i, Target_omega, Target_Omega,parameters.Target_T,t,parameters.Planet_mu)
+    SpacecraftPos = KeplerToCartesian(Spacecraft_alpha, Spacecraft_ecc, Spacecraft_i, Spacecraft_omega, Spacecraft_Omega,parameters.Spacecraft_T,t,parameters.Planet_mu)
 
-    SpacecraftPos = KeplerToCartesian(parameters.Spacecraft_alpha, parameters.Spacecraft_ecc, parameters.Spacecraft_i, parameters.Spacecraft_omega, parameters.Spacecraft_Omega,0,t,parameters.Planet_mu)
-
-    if parameters.Spacecraft_ecc > 0.01: #Eccentricity less than 0.01 is arbitrarily set to be the bound for a circular orbit
-        if parameters.Spacecraft_rP - 250 <= np.linalg.norm([SpacecraftPos[0],SpacecraftPos[1],SpacecraftPos[2]]) <= parameters.Spacecraft_rP + 250: #250m tolerance on when to burn
-            CircularizationBurn()
+    if Spacecraft_ecc > 1e-15: #Eccentricity less than 0.001 is arbitrarily set to be the bound for a circular orbit
+        
+        if Spacecraft_rP - 10 <= np.linalg.norm([SpacecraftPos[0],SpacecraftPos[1],SpacecraftPos[2]]) <= Spacecraft_rP + 10: #10m tolerance on when to burn
+            #CircularizationBurn()
+            print("Burning")
             continue
 
-    Target.pos.x, Target.pos.y, Target.pos.z = TargetPos[0],TargetPos[1],TargetPos[2]
+        #Update position after burn
+        TargetPos = KeplerToCartesian(Target_alpha, Target_ecc, Target_i, Target_omega, Target_Omega,0,t,parameters.Planet_mu)
+        SpacecraftPos = KeplerToCartesian(Spacecraft_alpha, Spacecraft_ecc, Spacecraft_i, Spacecraft_omega, Spacecraft_Omega,0,t,parameters.Planet_mu)
 
+    else:
+        print(Spacecraft_ecc,Spacecraft_ecc - 0.01)
+    
+    Target.pos.x, Target.pos.y, Target.pos.z = TargetPos[0],TargetPos[1],TargetPos[2]
     Spacecraft.pos.x, Spacecraft.pos.y, Spacecraft.pos.z = SpacecraftPos[0],SpacecraftPos[1],SpacecraftPos[2]
-    #print(np.linalg.norm([SpacecraftPos[3],SpacecraftPos[4],SpacecraftPos[5]]))
 
     TargetPath.append(pos=vector(TargetPos[0],TargetPos[1],TargetPos[2]))
 
     SpacecraftPath.append(pos=vector(SpacecraftPos[0],SpacecraftPos[1],SpacecraftPos[2]))
 
     #print(t)
+    # print(Target_alpha, Target_ecc, Target_i, Target_omega, Target_Omega,"K")
+    # print(TargetPosCK[0],TargetPosCK[1],TargetPosCK[2],TargetPosCK[3],TargetPosCK[4])
+
+   
+
+
+    
+
 
     
 
