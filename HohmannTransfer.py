@@ -1,20 +1,18 @@
 from vpython import sphere, box, curve, arrow, vector, rate, color, scene, button
 import numpy as np
 import sympy as sp
-import parameters
+from scipy.optimize import minimize
+import Parameters
 import Graphs
-
-scene.width = 1920
-scene.height = 1080
 
 #scale_factor = 1 #1 simulation linear size unit is equivalent to 100km
 
-#Import parameters that will be changed
-Target_alpha, Target_ecc, Target_i, Target_omega, Target_Omega, Target_rA, Target_rP = parameters.Target_alpha, parameters.Target_ecc, parameters.Target_i, parameters.Target_omega, parameters.Target_Omega, parameters.Target_rA, parameters.Target_rP
+#Import Parameters that will be changed
+Target_alpha, Target_ecc, Target_i, Target_omega, Target_Omega, Target_rA, Target_rP, Target_T = Parameters.Target_alpha, Parameters.Target_ecc, Parameters.Target_i, Parameters.Target_omega, Parameters.Target_Omega, Parameters.Target_rA, Parameters.Target_rP, Parameters.Target_T
 if (Target_rA == Target_rP):
     Target_omega = 0
 
-Spacecraft_alpha, Spacecraft_ecc, Spacecraft_i, Spacecraft_omega, Spacecraft_Omega, Spacecraft_rA, Spacecraft_rP = parameters.Spacecraft_alpha, parameters.Spacecraft_ecc, parameters.Spacecraft_i, parameters.Spacecraft_omega, parameters.Spacecraft_Omega, parameters.Spacecraft_rA, parameters.Spacecraft_rP
+Spacecraft_alpha, Spacecraft_ecc, Spacecraft_i, Spacecraft_omega, Spacecraft_Omega, Spacecraft_rA, Spacecraft_rP, Spacecraft_T = Parameters.Spacecraft_alpha, Parameters.Spacecraft_ecc, Parameters.Spacecraft_i, Parameters.Spacecraft_omega, Parameters.Spacecraft_Omega, Parameters.Spacecraft_rA, Parameters.Spacecraft_rP, Parameters.Spacecraft_T
 if (Spacecraft_rA == Spacecraft_rP):
     Spacecraft_omega = 0
 
@@ -34,7 +32,7 @@ def KeplerToCartesian(a,e,i,omega,Omega,T,t,mu): #Semi-Major axis, Eccentricity,
     #True anomaly (numerical)
     nu = 2 * np.arctan2(np.sqrt(1 + e) * np.sin(EA_numeric / 2), np.sqrt(1 - e) * np.cos(EA_numeric / 2))
     
-    #Orbital parameters (numerical)
+    #Orbital Parameters (numerical)
     #Radius
     r = a * (1 - e**2) / (1 + e * np.cos(nu)) 
     #Semi-latus rectum
@@ -63,7 +61,7 @@ def CartesianToKepler(r_vec,v_vec):
     h = np.linalg.norm(h_vec) 
 
     #Eccentricity
-    e_vec = np.cross(v_vec,h_vec)/parameters.Planet_mu - r_vec/r
+    e_vec = np.cross(v_vec,h_vec)/Parameters.Planet_mu - r_vec/r
     e = np.linalg.norm(e_vec)
 
     #Vector pointing towards the ascending node
@@ -83,7 +81,7 @@ def CartesianToKepler(r_vec,v_vec):
         Omega = 0
 
     #Argument of Periapsis and True Anomaly 
-    if (e > 1e-15): #An orbit with eccentricity less than 1e-15 is considered circular. There are too many computational errors that arise when computing an argument of periapsis for orbits that are extremely close to perfectly circular.
+    if (e > 1e-10 and n*e != 0): #An orbit with eccentricity less than 1e-10 is considered circular. There are too many computational errors that arise when computing an argument of periapsis for orbits that are extremely close to perfectly circular.
         if (e_vec[2] >= 0):
             omega = np.arccos(np.dot(n_vec,e_vec)/(n*e))
         else:
@@ -100,29 +98,51 @@ def CartesianToKepler(r_vec,v_vec):
             else:
                 nu = 2*np.pi - np.arccos(np.dot(n_vec,r_vec)/(n*r))
         else:
-            if (v_vec[0 <= 0]):
+            if (v_vec[0] <= 0):
                 nu = np.arccos(r_vec[0]/r)
             else:
                 nu = np.pi - np.arccos(r_vec[0]/r)
     
     #Semi-major axis
-    alpha = 1/((2/r)-(v**2/parameters.Planet_mu)) 
+    alpha = 1/((2/r)-(v**2/Parameters.Planet_mu)) 
 
-    #Eccentric anomaly
+    #Eccentric anomaly (IF CIRCULAR, THIS IS DIFFERENT)
     EA = np.arctan([((1-e)/(1+e))**(1/2)*np.tan(nu/2)])*2
 
     #Epoch
-    n = np.sqrt(parameters.Planet_mu/alpha**3)
+    n = np.sqrt(Parameters.Planet_mu/alpha**3)
     T = t - 1/n*(EA-e*np.sin(EA))
 
-    return [alpha,e,i,omega,Omega,nu,T]
+    while (nu > 2*np.pi):
+        nu-=2*np.pi
 
-def CalculateTargetV(r_vec,v_vec,Kep_i):
+    return [alpha,e,i,omega,Omega,nu,T[0]]
 
-    return
+def CalculateTargetV(R, v_initial):
+    # Objective function for optimization
+    def objective(v):
+        V = v_initial + v  # Modify initial velocity by v
+        kepler_elements = CartesianToKepler(R, V)
+        return kepler_elements[1]  # Return eccentricity
+    
+    # Initial guess for the optimization (small perturbation)
+    initial_guess = np.zeros(3)
+    
+    # Optimization bounds (could be adjusted based on physical constraints)
+    bounds = [(-100e100, 100e100), (-100e100, 100e100), (-100e100, 100e100)]  # Example bounds
+    
+    # Perform optimization
+    result = minimize(objective, initial_guess, bounds=bounds)
+    #print(result.x)
+    # Extract optimized velocity vector
+    v_optimized = result.x
+    
+    # Return the optimized velocity vector
+    return v_initial + v_optimized
+
 
 def CircularizeBurn(r_vec, v_vec, Kep_i):
-    #print("Burn",np.linalg.norm([SpacecraftPos[0],SpacecraftPos[1],SpacecraftPos[2]]) - parameters.Planet_Radius)
+    #print("Burn",np.linalg.norm([SpacecraftPos[0],SpacecraftPos[1],SpacecraftPos[2]]) - Parameters.Planet_Radius)
 
     return 
 
@@ -133,60 +153,70 @@ def ExitProgram():
     return
 
 #Defining initial conditions for simulation objects
+scene.width = 1920
+scene.height = 1080
+
 t = 0
 
 quit_button = button(text = "Quit", bind = ExitProgram) 
 
-arrow_length = 2 * parameters.Planet_Radius 
-x_axis = arrow(pos=vector(0, 0, 0), axis=vector(arrow_length, 0, 0), color=color.red, shaftwidth=0.01 * arrow_length)
-y_axis = arrow(pos=vector(0, 0, 0), axis=vector(0, arrow_length, 0), color=color.green, shaftwidth=0.01 * arrow_length)
-z_axis = arrow(pos=vector(0, 0, 0), axis=vector(0, 0, arrow_length), color=color.blue, shaftwidth=0.01 * arrow_length)
+arrow_length = 2 * Parameters.Planet_Radius 
+x_axis = arrow(pos=vector(0, 0, 0), axis=vector(arrow_length, 0, 0), color=color.red, shaftwidth=0.001 * arrow_length)
+y_axis = arrow(pos=vector(0, 0, 0), axis=vector(0, arrow_length, 0), color=color.green, shaftwidth=0.001 * arrow_length)
+z_axis = arrow(pos=vector(0, 0, 0), axis=vector(0, 0, arrow_length), color=color.blue, shaftwidth=0.001 * arrow_length)
 
-Planet = sphere(pos = vector(0,0,0), radius = parameters.Planet_Radius, color = color.blue)
+Planet = sphere(pos = vector(0,0,0), radius = Parameters.Planet_Radius, color = color.blue)
 
-TargetPosInitial = KeplerToCartesian(Target_alpha, Target_ecc, Target_i, Target_omega, Target_Omega,parameters.Target_T,t,parameters.Planet_mu) #need to fix the 0 at some point
+TargetPosInitial = KeplerToCartesian(Target_alpha, Target_ecc, Target_i, Target_omega, Target_Omega,Target_T,t,Parameters.Planet_mu) #need to fix the 0 at some point
 Target = sphere(pos = vector(TargetPosInitial[0],TargetPosInitial[1],TargetPosInitial[2]), radius = 200000, color = color.red) #Size is arbitrary
 
-SpacecraftPosInitial = KeplerToCartesian(Spacecraft_alpha, Spacecraft_ecc, Spacecraft_i, Spacecraft_omega, Spacecraft_Omega,parameters.Spacecraft_T,t,parameters.Planet_mu)
+SpacecraftPosInitial = KeplerToCartesian(Spacecraft_alpha, Spacecraft_ecc, Spacecraft_i, Spacecraft_omega, Spacecraft_Omega, Spacecraft_T,t,Parameters.Planet_mu)
 Spacecraft = box(pos = vector(SpacecraftPosInitial[0],SpacecraftPosInitial[1],SpacecraftPosInitial[2]), length = 200000, height = 200000, width = 200000, color = color.green) #Size is arbitrary
 
 TargetPath = curve(colour = color.white)
 SpacecraftPath = curve(colour = color.white)
+burn = 0
 
 #Simulation runtime loop
 while running: 
     rate(60)
-    t += 1/60*parameters.TimeScale # PLOT IT AND SEE PERIOD
+    t += 1/60*Parameters.TimeScale # PLOT IT AND SEE PERIOD
 
-    TargetPos = KeplerToCartesian(Target_alpha, Target_ecc, Target_i, Target_omega, Target_Omega,parameters.Target_T,t,parameters.Planet_mu)
-    SpacecraftPos = KeplerToCartesian(Spacecraft_alpha, Spacecraft_ecc, Spacecraft_i, Spacecraft_omega, Spacecraft_Omega,parameters.Spacecraft_T,t,parameters.Planet_mu)
+    TargetCart = KeplerToCartesian(Target_alpha, Target_ecc, Target_i, Target_omega, Target_Omega,Target_T,t,Parameters.Planet_mu)
+    SpacecraftCart = KeplerToCartesian(Spacecraft_alpha, Spacecraft_ecc, Spacecraft_i, Spacecraft_omega, Spacecraft_Omega,Spacecraft_T,t,Parameters.Planet_mu)
 
-    if Spacecraft_ecc > 1e-15: #Eccentricity less than 1e-15 is arbitrarily set to be the bound for a circular orbit
-        if Spacecraft_rP - 1 <= np.linalg.norm([SpacecraftPos[0],SpacecraftPos[1],SpacecraftPos[2]]) <= Spacecraft_rP + 1: #10m tolerance on when to burn
-            #CircularizationBurn()
-            #print("Burning")
-            continue
+    if Spacecraft_ecc > 1e-10: #Eccentricity less than 1e-10 is arbitrarily set to be the bound for a circular orbit
+        if Spacecraft_rA - 100 <= np.linalg.norm([SpacecraftCart[0],SpacecraftCart[1],SpacecraftCart[2]]) <= Spacecraft_rA + 100: #100m tolerance on when to burn
+            #Parameters.main()
+            #print(SpacecraftCart)
+            v_T = CalculateTargetV([SpacecraftCart[0],SpacecraftCart[1],SpacecraftCart[2]],[SpacecraftCart[3],SpacecraftCart[4],SpacecraftCart[5]])
+            new_kep = CartesianToKepler([SpacecraftCart[0],SpacecraftCart[1],SpacecraftCart[2]],v_T)
+            #print(new_kep[0], new_kep[1], new_kep[2], new_kep[3], new_kep[4], new_kep[6])
+            Spacecraft_alpha, Spacecraft_ecc, Spacecraft_i, Spacecraft_omega, Spacecraft_Omega, Spacecraft_T = new_kep[0], new_kep[1], new_kep[2], new_kep[3], new_kep[4], new_kep[6]
+            if burn == 0: 
+                SpacecraftPath.clear()
+                burn = 1
+            #continue
         #Update position after burn
-        TargetPos = KeplerToCartesian(Target_alpha, Target_ecc, Target_i, Target_omega, Target_Omega,0,t,parameters.Planet_mu)
-        SpacecraftPos = KeplerToCartesian(Spacecraft_alpha, Spacecraft_ecc, Spacecraft_i, Spacecraft_omega, Spacecraft_Omega,0,t,parameters.Planet_mu)
+        TargetCart = KeplerToCartesian(Target_alpha, Target_ecc, Target_i, Target_omega, Target_Omega, Target_T,t,Parameters.Planet_mu)
+        SpacecraftCart = KeplerToCartesian(Spacecraft_alpha, Spacecraft_ecc, Spacecraft_i, Spacecraft_omega, Spacecraft_Omega, Spacecraft_T,t,Parameters.Planet_mu)
     
-    Target.pos.x, Target.pos.y, Target.pos.z = TargetPos[0],TargetPos[1],TargetPos[2]
-    Spacecraft.pos.x, Spacecraft.pos.y, Spacecraft.pos.z = SpacecraftPos[0],SpacecraftPos[1],SpacecraftPos[2]
+    Target.pos.x, Target.pos.y, Target.pos.z = TargetCart[0],TargetCart[1],TargetCart[2]
+    Spacecraft.pos.x, Spacecraft.pos.y, Spacecraft.pos.z = SpacecraftCart[0],SpacecraftCart[1],SpacecraftCart[2]
 
-    TargetPath.append(pos=vector(TargetPos[0],TargetPos[1],TargetPos[2]))
+    TargetPath.append(pos=vector(TargetCart[0],TargetCart[1],TargetCart[2]))
+    SpacecraftPath.append(pos=vector(SpacecraftCart[0],SpacecraftCart[1],SpacecraftCart[2]))
 
-    SpacecraftPath.append(pos=vector(SpacecraftPos[0],SpacecraftPos[1],SpacecraftPos[2]))
-
-    Graphs.v_x.append(SpacecraftPos[3])
-    Graphs.v_y.append(SpacecraftPos[4])
-    Graphs.v_z.append(SpacecraftPos[5])
-    Graphs.r.append(np.linalg.norm([SpacecraftPos[0],SpacecraftPos[1],SpacecraftPos[2]]))
-    Graphs.v.append(np.linalg.norm([SpacecraftPos[3],SpacecraftPos[4],SpacecraftPos[5]]))
+    Graphs.v_x.append(SpacecraftCart[3])
+    Graphs.v_y.append(SpacecraftCart[4])
+    Graphs.v_z.append(SpacecraftCart[5])
+    Graphs.r.append(np.linalg.norm([SpacecraftCart[0],SpacecraftCart[1],SpacecraftCart[2]]))
+    Graphs.v.append(np.linalg.norm([SpacecraftCart[3],SpacecraftCart[4],SpacecraftCart[5]]))
     Graphs.t.append(t)
 
     #print(t)
-    # print(Target_alpha, Target_ecc, Target_i, Target_omega, Target_Omega,"K")
-    # print(TargetPosCK[0],TargetPosCK[1],TargetPosCK[2],TargetPosCK[3],TargetPosCK[4])
+    #print(SpacecraftCart)
+    
 
 print("Exiting Simulation.")
 Graphs.main()

@@ -1,9 +1,10 @@
 import numpy as np
+from scipy.constants import G
 #Simulation Parameters
 TimeScale = 100 #This scales relative timescale of the simulation. Default value is 100, meaning one real time second is equivalent to 100 seconds in the simulation
 
 #Universal Constants
-G = 6.674e-11 #Gravitational Constant
+G #Gravitational Constant
 
 #Planet Parameters, by default this set to Earth
 Planet_Mass = 5.972e24 #(kg)
@@ -17,10 +18,10 @@ Target_rA = 400e3 + Planet_Radius #Apoapsis (m)
 Target_rP = 400e3 + Planet_Radius  #Periapsis (m)
 Target_alpha = (Target_rA + Target_rP)/2 #Semi major axis (m)
 Target_ecc = (Target_rA - Target_rP)/(Target_rA + Target_rP) #Eccentricity
-Target_i = 51.64*(np.pi/180) #Inclination (Degree input, converted to radians)
+Target_i = 0*(np.pi/180) #Inclination (Degree input, converted to radians)
 Target_omega = 353.8799*(np.pi/180) #Argument of Periapsis (Degree input, converted to radians)
 Target_Omega = 176.7268*(np.pi/180) #Longitude of Ascending Node (Degree input, converted to radians)
-Target_T = 0 #Time of periapsis passage (s)
+Target_T = 1000 #Time of periapsis passage (s)
 
 
 #Spacecraft Parameters
@@ -31,12 +32,15 @@ Spacecraft_q = 500 #Mass flow rate (kg/s)
 Spacecraft_Thrust = Spacecraft_SI*Planet_StandardGravity*Spacecraft_q #Thrust (N). 
 
 #Spacecraft Orbtial Parameters
-Spacecraft_rA = 2100e3 + Planet_Radius #Apoapsis (m)
-Spacecraft_rP = 210e3 + Planet_Radius  #Periapsis (m)
+Spacecraft_rA = 400e3 + Planet_Radius #Apoapsis (m)
+Spacecraft_rP = 300e3 + Planet_Radius  #Periapsis (m)
 Spacecraft_alpha = (Spacecraft_rA + Spacecraft_rP)/2 #Semi major axis (m)
 Spacecraft_ecc = (Spacecraft_rA - Spacecraft_rP)/(Spacecraft_rA + Spacecraft_rP) #Eccentricity
-Spacecraft_i = 0*(np.pi/180) #Inclination (Degree input, converted to radians)
-Spacecraft_omega = 0*(np.pi/180) #Argument of Periapsis (Degree input, converted to radians)
-Spacecraft_Omega = 0*(np.pi/180) #Longitude of Ascending Node (Degree input, converted to radians)
-Spacecraft_T = 1000 #Time of periapsis passage (s)
+Spacecraft_i = 90*(np.pi/180) #Inclination (Degree input, converted to radians)
+Spacecraft_omega = 100*(np.pi/180) #Argument of Periapsis (Degree input, converted to radians)
+Spacecraft_Omega = 130*(np.pi/180) #Longitude of Ascending Node (Degree input, converted to radians)
+Spacecraft_T = 100 #Time of periapsis passage (s)
 
+def main():
+    print(Spacecraft_alpha,Spacecraft_ecc,Spacecraft_i,Spacecraft_omega,Spacecraft_Omega)
+    return
