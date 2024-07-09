@@ -11,10 +11,18 @@ import Graphs
 Target_alpha, Target_ecc, Target_i, Target_omega, Target_Omega, Target_rA, Target_rP, Target_T = Parameters.Target_alpha, Parameters.Target_ecc, Parameters.Target_i, Parameters.Target_omega, Parameters.Target_Omega, Parameters.Target_rA, Parameters.Target_rP, Parameters.Target_T
 if (Target_rA == Target_rP):
     Target_omega = 0
+# while (Target_T >= np.sqrt((4*np.pi*Target_alpha**3)/Parameters.Planet_mu)):
+#     Target_T -= np.sqrt((4*np.pi*Target_alpha**3)/Parameters.Planet_mu)
+
 
 Spacecraft_alpha, Spacecraft_ecc, Spacecraft_i, Spacecraft_omega, Spacecraft_Omega, Spacecraft_rA, Spacecraft_rP, Spacecraft_T = Parameters.Spacecraft_alpha, Parameters.Spacecraft_ecc, Parameters.Spacecraft_i, Parameters.Spacecraft_omega, Parameters.Spacecraft_Omega, Parameters.Spacecraft_rA, Parameters.Spacecraft_rP, Parameters.Spacecraft_T
 if (Spacecraft_rA == Spacecraft_rP):
     Spacecraft_omega = 0
+    
+# while (Spacecraft_T >= np.sqrt((4*np.pi*Spacecraft_alpha**3)/Parameters.Planet_mu)):
+#     Spacecraft_T -= np.sqrt((4*np.pi*Spacecraft_alpha**3)/Parameters.Planet_mu)
+
+#Calculate the period, and subtract it from T 
 
 def KeplerToCartesian(a,e,i,omega,Omega,T,t,mu): #Semi-Major axis, Eccentricity, Inclination, Argument of Periapsis, Longitude of Ascending node, Epoch, Standard gravitational parameter
     #Mean anomaly
@@ -186,16 +194,16 @@ while running:
     SpacecraftCart = KeplerToCartesian(Spacecraft_alpha, Spacecraft_ecc, Spacecraft_i, Spacecraft_omega, Spacecraft_Omega,Spacecraft_T,t,Parameters.Planet_mu)
 
     if Spacecraft_ecc > 1e-10: #Eccentricity less than 1e-10 is arbitrarily set to be the bound for a circular orbit
-        if Spacecraft_rA - 100 <= np.linalg.norm([SpacecraftCart[0],SpacecraftCart[1],SpacecraftCart[2]]) <= Spacecraft_rA + 100: #100m tolerance on when to burn
+        if Spacecraft_rP - 1000 <= np.linalg.norm([SpacecraftCart[0],SpacecraftCart[1],SpacecraftCart[2]]) <= Spacecraft_rP + 1000: #100m tolerance on when to burn
             #Parameters.main()
             #print(SpacecraftCart)
             v_T = CalculateTargetV([SpacecraftCart[0],SpacecraftCart[1],SpacecraftCart[2]],[SpacecraftCart[3],SpacecraftCart[4],SpacecraftCart[5]])
             new_kep = CartesianToKepler([SpacecraftCart[0],SpacecraftCart[1],SpacecraftCart[2]],v_T)
             #print(new_kep[0], new_kep[1], new_kep[2], new_kep[3], new_kep[4], new_kep[6])
             Spacecraft_alpha, Spacecraft_ecc, Spacecraft_i, Spacecraft_omega, Spacecraft_Omega, Spacecraft_T = new_kep[0], new_kep[1], new_kep[2], new_kep[3], new_kep[4], new_kep[6]
-            if burn == 0: 
-                SpacecraftPath.clear()
-                burn = 1
+            # if burn == 0: 
+            SpacecraftPath.clear()
+            #     #burn = 1
             #continue
         #Update position after burn
         TargetCart = KeplerToCartesian(Target_alpha, Target_ecc, Target_i, Target_omega, Target_Omega, Target_T,t,Parameters.Planet_mu)

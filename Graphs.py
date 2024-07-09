@@ -60,6 +60,6 @@ def main():
     Pindex = np.argmin(r)
     Aindex = np.argmax(r)
 
-    print("Velocity at Periapsis:", v_x[Pindex],v_y[Pindex],v_z[Pindex],v[Pindex])
-    print("Velocity at Apoapsis:", v_x[Aindex],v_y[Aindex],v_z[Aindex],v[Aindex])
+    # print("Velocity at Periapsis:", v_x[Pindex],v_y[Pindex],v_z[Pindex],v[Pindex])
+    # print("Velocity at Apoapsis:", v_x[Aindex],v_y[Aindex],v_z[Aindex],v[Aindex])
     return

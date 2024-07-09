@@ -18,7 +18,7 @@ Target_rA = 400e3 + Planet_Radius #Apoapsis (m)
 Target_rP = 400e3 + Planet_Radius  #Periapsis (m)
 Target_alpha = (Target_rA + Target_rP)/2 #Semi major axis (m)
 Target_ecc = (Target_rA - Target_rP)/(Target_rA + Target_rP) #Eccentricity
-Target_i = 0*(np.pi/180) #Inclination (Degree input, converted to radians)
+Target_i = 15*(np.pi/180) #Inclination (Degree input, converted to radians)
 Target_omega = 353.8799*(np.pi/180) #Argument of Periapsis (Degree input, converted to radians)
 Target_Omega = 176.7268*(np.pi/180) #Longitude of Ascending Node (Degree input, converted to radians)
 Target_T = 1000 #Time of periapsis passage (s)
@@ -32,14 +32,14 @@ Spacecraft_q = 500 #Mass flow rate (kg/s)
 Spacecraft_Thrust = Spacecraft_SI*Planet_StandardGravity*Spacecraft_q #Thrust (N). 
 
 #Spacecraft Orbtial Parameters
-Spacecraft_rA = 400e3 + Planet_Radius #Apoapsis (m)
+Spacecraft_rA = 330e3 + Planet_Radius #Apoapsis (m)
 Spacecraft_rP = 300e3 + Planet_Radius  #Periapsis (m)
 Spacecraft_alpha = (Spacecraft_rA + Spacecraft_rP)/2 #Semi major axis (m)
 Spacecraft_ecc = (Spacecraft_rA - Spacecraft_rP)/(Spacecraft_rA + Spacecraft_rP) #Eccentricity
-Spacecraft_i = 90*(np.pi/180) #Inclination (Degree input, converted to radians)
+Spacecraft_i = 10*(np.pi/180) #Inclination (Degree input, converted to radians) PROBLEMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM
 Spacecraft_omega = 100*(np.pi/180) #Argument of Periapsis (Degree input, converted to radians)
 Spacecraft_Omega = 130*(np.pi/180) #Longitude of Ascending Node (Degree input, converted to radians)
-Spacecraft_T = 100 #Time of periapsis passage (s)
+Spacecraft_T = 7e7 #Time of periapsis passage (s)
 
 def main():
     print(Spacecraft_alpha,Spacecraft_ecc,Spacecraft_i,Spacecraft_omega,Spacecraft_Omega)
