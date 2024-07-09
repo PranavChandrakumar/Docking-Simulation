@@ -9,7 +9,7 @@ v = []
 t = []
 
 def main():
-    # Create a figure and axis for each variable
+    #Plots for each variable
     fig, axs = plt.subplots(5, 1, figsize=(10, 25))
 
     # Plot v_x against t
@@ -52,9 +52,9 @@ def main():
     axs[4].legend()
     axs[4].grid(True)
 
-    # Adjust layout to prevent overlap
     plt.tight_layout()
-    # Show the plots
+    
+    #Display plots
     plt.show()
 
     Pindex = np.argmin(r)
@@ -62,4 +62,12 @@ def main():
 
     # print("Velocity at Periapsis:", v_x[Pindex],v_y[Pindex],v_z[Pindex],v[Pindex])
     # print("Velocity at Apoapsis:", v_x[Aindex],v_y[Aindex],v_z[Aindex],v[Aindex])
+    years = int(np.floor(t[-1]//3.154e7))
+    months = int(np.floor((t[-1]-years*3.154e7)/2.62e6))
+    weeks = int(np.floor((t[-1]-years*3.154e7-months*2.62e6)/604800))
+    days = int(np.floor((t[-1]-years*3.154e7-months*2.62e6-weeks*604800)/86400))
+    hours = int(np.floor((t[-1]-years*3.154e7-months*2.62e6-weeks*604800-days*86400)/3600))
+    minutes = int(np.floor((t[-1]-years*3.154e7-months*2.62e6-weeks*6048800-days*86400-hours*3600)/60))
+    seconds = int((t[-1]-years*3.154e7-months*2.62e6-weeks*6048800-days*86400-hours*3600-minutes*60))
+    print("Total Simulation Time:", years,"years",months,"months",weeks,"weeks",days,"days",hours,"hours",minutes,"minutes",seconds,"seconds")
     return
