@@ -57,11 +57,6 @@ def main():
     #Display plots
     plt.show()
 
-    Pindex = np.argmin(r)
-    Aindex = np.argmax(r)
-
-    # print("Velocity at Periapsis:", v_x[Pindex],v_y[Pindex],v_z[Pindex],v[Pindex])
-    # print("Velocity at Apoapsis:", v_x[Aindex],v_y[Aindex],v_z[Aindex],v[Aindex])
     years = int(np.floor(t[-1]//3.154e7))
     months = int(np.floor((t[-1]-years*3.154e7)/2.62e6))
     weeks = int(np.floor((t[-1]-years*3.154e7-months*2.62e6)/604800))

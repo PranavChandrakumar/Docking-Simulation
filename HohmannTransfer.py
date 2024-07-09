@@ -199,7 +199,7 @@ while running:
             # if burn == 0: 
             SpacecraftPath.clear()
             #     #burn = 1
-            #continue
+            
         #Update position after burn
         TargetCart = KeplerToCartesian(Target_alpha, Target_ecc, Target_i, Target_omega, Target_Omega, Target_T,t,Parameters.Planet_mu)
         SpacecraftCart = KeplerToCartesian(Spacecraft_alpha, Spacecraft_ecc, Spacecraft_i, Spacecraft_omega, Spacecraft_Omega, Spacecraft_T,t,Parameters.Planet_mu)
@@ -217,8 +217,6 @@ while running:
     Graphs.v.append(np.linalg.norm([SpacecraftCart[3],SpacecraftCart[4],SpacecraftCart[5]]))
     Graphs.t.append(t)
 
-    #print(t)
-    #print(SpacecraftCart)
     
 
 print("Exiting Simulation.")
