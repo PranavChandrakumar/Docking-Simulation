@@ -57,12 +57,13 @@ def main():
     #Display plots
     plt.show()
 
+    #This doesn't work as intended (leap years and stuff)
     years = int(np.floor(t[-1]//3.154e7))
     months = int(np.floor((t[-1]-years*3.154e7)/2.62e6))
     weeks = int(np.floor((t[-1]-years*3.154e7-months*2.62e6)/604800))
     days = int(np.floor((t[-1]-years*3.154e7-months*2.62e6-weeks*604800)/86400))
     hours = int(np.floor((t[-1]-years*3.154e7-months*2.62e6-weeks*604800-days*86400)/3600))
-    minutes = int(np.floor((t[-1]-years*3.154e7-months*2.62e6-weeks*6048800-days*86400-hours*3600)/60))
-    seconds = int((t[-1]-years*3.154e7-months*2.62e6-weeks*6048800-days*86400-hours*3600-minutes*60))
+    minutes = int(np.floor((t[-1]-years*3.154e7-months*2.62e6-weeks*604800-days*86400-hours*3600)/60))
+    seconds = int((t[-1]-years*3.154e7-months*2.62e6-weeks*604800-days*86400-hours*3600-minutes*60))
     print("Total Simulation Time:", years,"years",months,"months",weeks,"weeks",days,"days",hours,"hours",minutes,"minutes",seconds,"seconds")
     return

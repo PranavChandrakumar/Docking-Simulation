@@ -226,10 +226,47 @@ while running:
         r0.append([SpacecraftCart[0],SpacecraftCart[1],SpacecraftCart[2]])
         v0.append([SpacecraftCart[3],SpacecraftCart[4],SpacecraftCart[5]])
 
-    if(t > Target_Period and t > Spacecraft_Period and burn == 0):
-        print("Calculating maneouver required for intercept, stand by ...")
-        ManeuverCalculations.InclinationChangePosition(r0,r1,v0,v1,time_array)
-        burn += 1
+    # if(t > Target_Period and t > Spacecraft_Period and burn == 0):
+    #     print("Calculating maneouver required for intercept, stand by ...")
+    #     #  #vec = ManeuverCalculations.CalculateDeltaV(r0[0],r1[10],v0[0],v1[10])
+    #     #  #print(vec)
+    #     #  new_kep = CartesianToKepler([SpacecraftCart[0],SpacecraftCart[1],SpacecraftCart[2]],[TargetCart[3],TargetCart[4],TargetCart[5]])
+    #     #  Spacecraft_alpha, Spacecraft_ecc, Spacecraft_i, Spacecraft_omega, Spacecraft_Omega, Spacecraft_T = new_kep[0], new_kep[1], new_kep[2], new_kep[3], new_kep[4], new_kep[6]            
+    #     #  SpacecraftPath.clear()
+    #     #  SpacecraftPath.color = color.red
+    #     #  #Update position after burn
+    #     #  TargetCart = KeplerToCartesian(Target_alpha, Target_ecc, Target_i, Target_omega, Target_Omega, Target_T,t,Planet_mu)
+    #     #  SpacecraftCart = KeplerToCartesian(Spacecraft_alpha, Spacecraft_ecc, Spacecraft_i, Spacecraft_omega, Spacecraft_Omega, Spacecraft_T,t,Planet_mu)
+    #     #  burn+=1
+    #     ManeuverCalculations.CalculateDeltaV(r0,r1,v0,v1,time_array)
+    #     burn += 1
+
+    
+  
+    # if Spacecraft_ecc > 1e-10: #Eccentricity less than 1e-10 is arbitrarily set to be the bound for a circular orbit
+    #     if Spacecraft_rA - 5000 <= np.linalg.norm([SpacecraftCart[0],SpacecraftCart[1],SpacecraftCart[2]]) <= Spacecraft_rA + 5000: #1 km tolerance on when to burn
+    #         TimeScale = 1
+    #     if Spacecraft_rA - 100 <= np.linalg.norm([SpacecraftCart[0],SpacecraftCart[1],SpacecraftCart[2]]) <= Spacecraft_rA + 100: 
+    #         v_T = CalculateDeltaV([SpacecraftCart[0],SpacecraftCart[1],SpacecraftCart[2]],[SpacecraftCart[3],SpacecraftCart[4],SpacecraftCart[5]],1)
+    #         new_kep = CartesianToKepler([SpacecraftCart[0],SpacecraftCart[1],SpacecraftCart[2]],v_T)
+    #         Spacecraft_alpha, Spacecraft_ecc, Spacecraft_i, Spacecraft_omega, Spacecraft_Omega, Spacecraft_T = new_kep[0], new_kep[1], new_kep[2], new_kep[3], new_kep[4], new_kep[6]            
+    #         SpacecraftPath.color = color.red
+    #     #Update position after burn
+    #     TargetCart = KeplerToCartesian(Target_alpha, Target_ecc, Target_i, Target_omega, Target_Omega, Target_T,t,Planet_mu)
+    #     SpacecraftCart = KeplerToCartesian(Spacecraft_alpha, Spacecraft_ecc, Spacecraft_i, Spacecraft_omega, Spacecraft_Omega, Spacecraft_T,t,Planet_mu)
+
+    # #print(SpacecraftCart[2])
+    # if -1000 <= SpacecraftCart[2] <= 1000 and burn == False: 
+    #     #TimeScale change
+    #     TimeScale = 1
+    #     burn = True 
+    #     v_T = CalculateDeltaV([SpacecraftCart[0],SpacecraftCart[1],SpacecraftCart[2]],[SpacecraftCart[3],SpacecraftCart[4],SpacecraftCart[5]],2)
+    #     new_kep = CartesianToKepler([SpacecraftCart[0],SpacecraftCart[1],SpacecraftCart[2]],v_T)
+    #     Spacecraft_alpha, Spacecraft_ecc, Spacecraft_i, Spacecraft_omega, Spacecraft_Omega, Spacecraft_T = new_kep[0], new_kep[1], new_kep[2], new_kep[3], new_kep[4], new_kep[6]
+    #     #print(new_kep[0], new_kep[1], new_kep[2], new_kep[3], new_kep[4], new_kep[6])
+    #     # #Update position after burn
+    #     SpacecraftPath.color = color.green
+    #     SpacecraftCart = KeplerToCartesian(Spacecraft_alpha, Spacecraft_ecc, Spacecraft_i, Spacecraft_omega, Spacecraft_Omega, Spacecraft_T,t,Planet_mu)
     
     Target.pos.x, Target.pos.y, Target.pos.z = TargetCart[0],TargetCart[1],TargetCart[2]
     Spacecraft.pos.x, Spacecraft.pos.y, Spacecraft.pos.z = SpacecraftCart[0],SpacecraftCart[1],SpacecraftCart[2]
